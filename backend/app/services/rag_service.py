@@ -7,14 +7,14 @@ import os
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-def retrieve_context(query: str, top_k: int = 3) -> str:
-    # Add your collection name here
-    collection_name = "nmc-regulations"  
+def retrieve_context(query: str, collection_name: str, top_k: int = 3) -> str:
+    """
+    Retrieve top_k relevant chunks from ChromaDB collection.
+    """
     results = chromadb_service.query(query, top_k, collection_name=collection_name)
     if not results or "documents" not in results:
         return ""
     return " ".join([doc for docs in results["documents"] for doc in docs])
-
 
 def generate_gemini_response(query: str, context: str) -> str:
     """
@@ -27,12 +27,15 @@ def generate_gemini_response(query: str, context: str) -> str:
     )
     return response.choices[0].message.content
 
-def rag_interactive(audio_path: str, tts_output_path: str):
+def rag_interactive(audio_path: str, tts_output_path: str, collection_name: str):
     query = speech_to_text(audio_path)
     if "❌" in query or "⚠️" in query:
         return query
 
-    context = retrieve_context(query)
+    # dynamically use collection
+    context = retrieve_context(query, collection_name)
     answer = generate_gemini_response(query, context)
     text_to_speech_bytes(answer, tts_output_path)
     return tts_output_path
+
+

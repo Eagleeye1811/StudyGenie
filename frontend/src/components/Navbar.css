@@ -1,0 +1,77 @@
+.navbar {
+    position: fixed; /* Changed from sticky to fixed */
+    top: 0;
+    z-index: 1000; /* Keeps it above other content */
+    width: 100%; /* Ensure it spans the full width */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #4f46e5; /* Indigo */
+    padding: 12px 24px;
+    color: white;
+  }
+  
+  
+  .logo {
+    font-size: 1.5rem;
+    font-weight: bold;
+  }
+  
+  .nav-links {
+    list-style: none;
+    display: flex;
+    gap: 18px;
+  }
+  
+  .nav-links a {
+    text-decoration: none;
+    color: white;
+    font-weight: 500;
+    transition: 0.2s ease-in-out;
+  }
+  
+  .nav-links a:hover {
+    color: #d1d5db; /* Gray-300 */
+  }
+  
+  /* Language Selector Styling */
+  .lang {
+    border: 2px solid #7e57c2;
+    border-radius: 5px;
+    outline: none;
+    padding: 5px;
+    transition: color 0.3s ease, transform 0.3s ease;
+    background-color: #ede4fe;
+  }
+  
+  #languageSelect {
+    outline: none;
+    border: none;
+    border-radius: 5px;
+    color: #7e57c2;
+    transition: color 0.3s ease, transform 0.3s ease;
+    cursor: pointer;
+    background-color: #ede4fe;
+  }
+  
+  #languageSelect:hover,
+  .lang:hover {
+    transform: scale(1.05);
+  }
+  
+  #google_translate_element {
+    border: 2px solid #7e57c2;
+    border-radius: 5px;
+    display: none;
+  }
+  
+  /* Hide default Google Translate elements */
+  body > .skiptranslate > iframe.skiptranslate,
+  body > .goog-te-banner-frame {
+    display: none !important;
+  }
+
+body {
+  top: 0px !important;
+  padding-top: 60px; /* Adjust padding to match navbar height */
+}
