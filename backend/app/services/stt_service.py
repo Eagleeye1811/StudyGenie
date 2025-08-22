@@ -8,7 +8,7 @@ import json
 # Load Vosk model
 # -----------------------------
 # Choose either small or full model
-MODEL_PATH = os.path.join(os.path.dirname(__file__), "../../vosk-model-small-en-us-0.15")
+MODEL_PATH = os.path.join(os.path.dirname(__file__), "../../vosk-model-en-us-0.22")
 model = Model(MODEL_PATH)
 
 # -----------------------------
@@ -25,7 +25,8 @@ def speech_to_text(audio_file_path: str) -> str:
     wf = wave.open(audio_file_path, "rb")
 
     if wf.getnchannels() != 1 or wf.getsampwidth() != 2 or wf.getframerate() not in [8000, 16000, 44100]:
-        raise ValueError("Audio file must be WAV format mono PCM")
+     raise ValueError("Audio file must be WAV format mono PCM")
+
 
     rec = KaldiRecognizer(model, wf.getframerate())
     rec.SetWords(True)

@@ -39,7 +39,7 @@ async def summarize_pdf(file: UploadFile = File(...), name: str = Form(...)):
 
     # Generate audio locally first
     audio_path = f"audio/{base_id}_summary.mp3"
-    tts_service.text_to_speech(summary, audio_path)
+    tts_service.text_to_speech_file(summary, audio_path)
 
     # Upload to Cloudinary
     cloudinary_url = upload_audio_to_cloudinary(audio_path)
