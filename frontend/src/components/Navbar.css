@@ -1,75 +1,190 @@
 .navbar {
-    position: fixed; /* Changed from sticky to fixed */
-    top: 0;
-    z-index: 1000; /* Keeps it above other content */
-    width: 100%; /* Ensure it spans the full width */
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: #4f46e5; /* Indigo */
-    padding: 12px 24px;
-    color: white;
-  }
-  
-  
-  .logo {
-    font-size: 1.5rem;
-    font-weight: bold;
-  }
-  
-  .nav-links {
-    list-style: none;
-    display: flex;
-    gap: 18px;
-  }
-  
-  .nav-links a {
-    text-decoration: none;
-    color: white;
-    font-weight: 500;
-    transition: 0.2s ease-in-out;
-  }
-  
-  .nav-links a:hover {
-    color: #d1d5db; /* Gray-300 */
-  }
-  
-  /* Language Selector Styling */
-  .lang {
-    border: 2px solid #7e57c2;
-    border-radius: 5px;
-    outline: none;
-    padding: 5px;
-    transition: color 0.3s ease, transform 0.3s ease;
-    background-color: #ede4fe;
-  }
-  
-  #languageSelect {
-    outline: none;
-    border: none;
-    border-radius: 5px;
-    color: #7e57c2;
-    transition: color 0.3s ease, transform 0.3s ease;
-    cursor: pointer;
-    background-color: #ede4fe;
-  }
-  
-  #languageSelect:hover,
-  .lang:hover {
-    transform: scale(1.05);
-  }
-  
-  #google_translate_element {
-    border: 2px solid #7e57c2;
-    border-radius: 5px;
-    display: none;
-  }
-  
-  /* Hide default Google Translate elements */
-  body > .skiptranslate > iframe.skiptranslate,
-  body > .goog-te-banner-frame {
-    display: none !important;
-  }
+  position: fixed; /* Changed from sticky to fixed */
+  top: 0;
+  z-index: 1000; /* Keeps it above other content */
+  width: 100%; /* Ensure it spans the full width */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #4f46e5; /* Indigo */
+  padding: 12px 24px;
+  color: white;
+}
+
+.logo {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.nav-links {
+  list-style: none;
+  display: flex;
+  gap: 18px;
+}
+
+.nav-links a {
+  text-decoration: none;
+  color: white;
+  font-weight: 500;
+  transition: 0.2s ease-in-out;
+}
+
+.nav-links a:hover {
+  color: #d1d5db; /* Gray-300 */
+}
+
+/* Authentication Section */
+.auth-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.auth-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.auth-btn {
+  padding: 8px 16px;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  border: 2px solid transparent;
+}
+
+.login-btn {
+  background-color: white;
+  color: #4f46e5;
+  border-color: white;
+}
+
+.login-btn:hover {
+  background-color: #f3f4f6;
+}
+
+.register-btn {
+  background-color: transparent;
+  color: white;
+  border-color: white;
+}
+
+.register-btn:hover {
+  background-color: #5b21b6;
+}
+
+/* User Dropdown */
+.user-dropdown {
+  position: relative;
+}
+
+.user-button {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.user-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.user-name {
+  font-weight: 500;
+}
+
+.dropdown-arrow {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.2s ease;
+}
+
+.user-dropdown.open .dropdown-arrow {
+  transform: rotate(180deg);
+}
+
+.dropdown-menu {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  margin-top: 8px;
+  width: 192px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  z-index: 50;
+}
+
+.dropdown-content {
+  padding: 4px 0;
+}
+
+.dropdown-item {
+  display: block;
+  width: 100%;
+  padding: 12px 16px;
+  text-decoration: none;
+  color: #374151;
+  font-size: 14px;
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.dropdown-item:hover {
+  background-color: #f3f4f6;
+}
+
+.logout-btn {
+  border-top: 1px solid #e5e7eb;
+}
+
+/* Language Selector Styling */
+.lang {
+  border: 2px solid #7e57c2;
+  border-radius: 5px;
+  outline: none;
+  padding: 5px;
+  transition: color 0.3s ease, transform 0.3s ease;
+  background-color: #ede4fe;
+}
+
+#languageSelect {
+  outline: none;
+  border: none;
+  border-radius: 5px;
+  color: #7e57c2;
+  transition: color 0.3s ease, transform 0.3s ease;
+  cursor: pointer;
+  background-color: #ede4fe;
+}
+
+#languageSelect:hover,
+.lang:hover {
+  transform: scale(1.05);
+}
+
+#google_translate_element {
+  border: 2px solid #7e57c2;
+  border-radius: 5px;
+  display: none;
+}
+
+/* Hide default Google Translate elements */
+body > .skiptranslate > iframe.skiptranslate,
+body > .goog-te-banner-frame {
+  display: none !important;
+}
 
 body {
   top: 0px !important;
