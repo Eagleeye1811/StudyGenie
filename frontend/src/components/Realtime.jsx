@@ -11,23 +11,38 @@ const Realtime = () => {
   useEffect(() => {
     ws.current = new WebSocket("ws://127.0.0.1:8000/ws/assistant");
 
-    ws.current.onmessage = (event) => {
-      // Detect if it's JSON (text) or audio bytes
-      try {
-        const data = JSON.parse(event.data);
-        if (data.type === "text") {
-          setMessages((prev) => [...prev, { type: "user", content: data.content }]);
+    ws.current.onmessage = async (event) => {
+        try {
+          const data = JSON.parse(event.data);
+      
+          if (data.type === "user") {
+            // Display the spoken query
+            setMessages((prev) => [...prev, { type: "user", content: data.content }]);
+          } else if (data.type === "assistant") {
+            // Display the LLM response
+            setMessages((prev) => [...prev, { type: "assistant", content: data.text }]);
+      
+            // Play audio if available
+            if (data.audio) {
+              const audioBytes = Uint8Array.from(atob(data.audio), c => c.charCodeAt(0));
+              const audioBlob = new Blob([audioBytes], { type: "audio/wav" });
+              const audioUrl = URL.createObjectURL(audioBlob);
+              const audio = new Audio(audioUrl);
+              audio.play();
+            }
+          }
+        } catch {
+          // fallback in case something is raw audio
+          const audioBlob = new Blob([event.data], { type: "audio/wav" });
+          const audioUrl = URL.createObjectURL(audioBlob);
+          const audio = new Audio(audioUrl);
+          audio.play();
+      
+          setMessages((prev) => [...prev, { type: "assistant", content: "Voice response..." }]);
         }
-      } catch {
-        // Binary audio
-        const audioBlob = new Blob([event.data], { type: "audio/wav" });
-        const audioUrl = URL.createObjectURL(audioBlob);
-        const audio = new Audio(audioUrl);
-        audio.play();
-
-        setMessages((prev) => [...prev, { type: "assistant", content: "Voice response..." }]);
-      }
-    };
+      };
+      
+      
 
     return () => ws.current.close();
   }, []);
