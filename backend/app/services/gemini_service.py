@@ -10,6 +10,22 @@ def random_tag(length: int = 6) -> str:
     """Generate a random string of given length to add variety in quiz prompts."""
     return ''.join(random.choices(string.ascii_lowercase + string.digits, k=length))
 
+# --- Utility: Safe JSON parsing with auto-repair ---
+def safe_json_parse(text: str, fallback=None):
+    """Try to parse JSON, attempt minimal repair if needed."""
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError as e:
+        print(f"⚠️ JSON parsing error: {e}\nRaw Gemini output: {text[:500]}...")
+        # Try trimming at last closing bracket
+        if "]" in text:
+            repaired = text[: text.rfind("]") + 1]
+            try:
+                return json.loads(repaired)
+            except:
+                pass
+        return fallback if fallback is not None else []
+
 #  Summary function (deterministic)
 def get_summary(text: str) -> str:
     url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key={GEMINI_API_KEY}"
@@ -38,16 +54,19 @@ def get_quiz(summary: str) -> list:
     unique_tag = random_tag()
 
     prompt = f"""
-    You are a quiz generator. Generate **5 unique multiple-choice questions** based ONLY on the following summary.
-    Requirements:
-    - Each question must have exactly 4 options.
-    - Specify clearly which option is correct.
-    - Format your output strictly as a JSON array of objects, each with keys:
-        "question", "options" (array), "answer"
-    - Do not include markdown, explanations, or any extra text.
-    - Ensure questions are varied every time this prompt is used.
+    You are a quiz generator. Generate exactly 5 multiple-choice questions based ONLY on the summary below.
 
-    Randomizer Key: {unique_tag}  # <-- ensures new set each call
+    Rules:
+    - Each question must have exactly 4 options.
+    - Provide the correct option explicitly in the "answer" field.
+    - Output must be STRICT JSON with no markdown, no extra text.
+    - JSON format: 
+    [
+      {{"question": "...", "options": ["A","B","C","D"], "answer": "..."}},
+      ...
+    ]
+
+    Randomizer Key: {unique_tag}
 
     Summary:
     {summary}
@@ -70,34 +89,21 @@ def get_quiz(summary: str) -> list:
         response_data = res.json()
         text = response_data['candidates'][0]['content']['parts'][0]['text'].strip()
 
-        # Remove markdown/code block wrappers and extract JSON array
+        # Remove wrappers
         if text.startswith("```"):
             start_idx = text.find("[")
             end_idx = text.rfind("]") + 1
             text = text[start_idx:end_idx]
-        # Remove any leading/trailing text before/after JSON array
-        if not text.startswith("["):
-            start_idx = text.find("[")
-            if start_idx != -1:
-                text = text[start_idx:]
-        if not text.endswith("]"):
-            end_idx = text.rfind("]")
-            if end_idx != -1:
-                text = text[:end_idx+1]
 
-        try:
-            quiz_json = json.loads(text)
-            return quiz_json
-        except Exception as e:
-            print(f"⚠️ JSON parsing error: {e}\nRaw Gemini output: {text}")
-            # fallback single question
-            return [
-                {
-                    "question": "Fallback Question?",
-                    "options": ["Option A", "Option B", "Option C", "Option D"],
-                    "answer": "Option A"
-                }
-            ]
+        # ✅ Use safe_json_parse
+        quiz_json = safe_json_parse(text, fallback=[
+            {
+                "question": "Fallback Question?",
+                "options": ["Option A", "Option B", "Option C", "Option D"],
+                "answer": "Option A"
+            }
+        ])
+        return quiz_json
     else:
         raise Exception(f"Gemini Quiz API failed: {res.text}")
 
@@ -106,10 +112,10 @@ def get_precise_bullets(text: str, num_bullets: int = 10) -> list:
     url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key={GEMINI_API_KEY}"
 
     prompt = f"""
-    Summarize the following content into very precise, important, and technical bullet points for students. 
+    Summarize the following into precise, important, technical points for students. 
     Each point should be concise and suitable for a flashcard. 
-    Format your output as a JSON array of strings, with no extra text or markdown. 
-    If possible, provide up to {num_bullets} points, but only as many as are truly important.
+    Output STRICT JSON as an array of strings (no markdown, no extra text). 
+    Provide up to {num_bullets} points, only the most important.
 
     Content:
     {text}
@@ -130,26 +136,15 @@ def get_precise_bullets(text: str, num_bullets: int = 10) -> list:
     if response.status_code == 200:
         data = response.json()
         text = data["candidates"][0]["content"]["parts"][0]["text"].strip()
-        # Remove markdown/code block wrappers and extract JSON array
+
         if text.startswith("```"):
             start_idx = text.find("[")
             end_idx = text.rfind("]") + 1
             text = text[start_idx:end_idx]
-        # Remove any leading/trailing text before/after JSON array
-        if not text.startswith("["):
-            start_idx = text.find("[")
-            if start_idx != -1:
-                text = text[start_idx:]
-        if not text.endswith("]"):
-            end_idx = text.rfind("]")
-            if end_idx != -1:
-                text = text[:end_idx+1]
-        try:
-            bullets = json.loads(text)
-            return bullets
-        except Exception as e:
-            print(f"⚠️ JSON parsing error: {e}\nRaw Gemini output: {text}")
-            return []
+
+        # ✅ Use safe_json_parse
+        bullets = safe_json_parse(text, fallback=[])
+        return bullets
     else:
         raise Exception(f"Gemini API Error: {response.text}")
 
@@ -178,3 +173,4 @@ def get_answer(query: str, context: str) -> str:
         return res.json()['candidates'][0]['content']['parts'][0]['text'].strip()
     else:
         raise Exception(f"Gemini API failed (answer): {res.text}")
+
