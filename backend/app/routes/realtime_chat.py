@@ -1,9 +1,9 @@
-# app/routes/realtime_chat.py
 import tempfile
 import subprocess
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from app.services import stt_service, tts_service, rag_service, gemini_service
 import os
+import base64
 
 router = APIRouter()
 active_sessions = {}
@@ -16,7 +16,6 @@ async def websocket_endpoint(websocket: WebSocket):
 
     try:
         while True:
-            # Receive audio chunk from frontend
             data = await websocket.receive_bytes()
 
             # 1️⃣ Save raw browser audio (WebM/Opus) temporarily
@@ -24,7 +23,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 tmp_webm.write(data)
                 tmp_webm_path = tmp_webm.name
 
-            # 2️⃣ Convert WebM → WAV mono PCM using ffmpeg
+            # 2️⃣ Convert WebM -> WAV mono PCM using ffmpeg
             tmp_wav_path = tmp_webm_path.replace(".webm", ".wav")
             subprocess.run([
                 "ffmpeg", "-y", "-i", tmp_webm_path, "-ar", "16000", "-ac", "1", tmp_wav_path
@@ -41,7 +40,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 continue
 
             # 4️⃣ Optional: send recognized text back to frontend
-            await websocket.send_json({"type": "text", "content": user_query})
+            await websocket.send_json({"type": "user", "content": user_query})
 
             # 5️⃣ RAG: retrieve context
             user_session = active_sessions[session_id]
@@ -57,9 +56,14 @@ async def websocket_endpoint(websocket: WebSocket):
 
             # 7️⃣ TTS: convert answer to audio bytes
             audio_bytes = tts_service.text_to_speech_bytes(answer)
+            audio_b64 = base64.b64encode(audio_bytes).decode("utf-8")
 
-            # 8️⃣ Send audio bytes back to frontend
-            await websocket.send_bytes(audio_bytes)
+            # 8️⃣ Send both text + audio to frontend
+            await websocket.send_json({
+                "type": "assistant",
+                "text": answer,
+                "audio": audio_b64
+            })
 
     except WebSocketDisconnect:
         active_sessions.pop(session_id, None)
