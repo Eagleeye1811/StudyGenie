@@ -3,3 +3,4 @@
 __pycache__/
 *.pyc
 .env
+vosk-model-en-us-0.22

@@ -1,4 +1,4 @@
-# 🧠 Notes Summarizer Backend – FastAPI
+# 📚 StudyGenie Backend – FastAPI
 
 This is the backend for the **Notes Summarizer** project, built using **FastAPI**. It provides API endpoints for processing and summarizing uploaded notes or text.
 

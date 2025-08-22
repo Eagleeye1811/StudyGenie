@@ -1,17 +1,20 @@
 # chat.py
 from app.services import chromadb_service
-from stt_service import speech_to_text
-from tts_service import text_to_speech
+from .stt_service import speech_to_text
+from .tts_service import text_to_speech_bytes
 import openai
 import os
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 def retrieve_context(query: str, top_k: int = 3) -> str:
-    results = chromadb_service.query(query, top_k)
+    # Add your collection name here
+    collection_name = "nmc-regulations"  
+    results = chromadb_service.query(query, top_k, collection_name=collection_name)
     if not results or "documents" not in results:
         return ""
     return " ".join([doc for docs in results["documents"] for doc in docs])
+
 
 def generate_gemini_response(query: str, context: str) -> str:
     """
@@ -31,5 +34,5 @@ def rag_interactive(audio_path: str, tts_output_path: str):
 
     context = retrieve_context(query)
     answer = generate_gemini_response(query, context)
-    text_to_speech(answer, tts_output_path)
+    text_to_speech_bytes(answer, tts_output_path)
     return tts_output_path

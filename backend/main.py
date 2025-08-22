@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routes import summarizer, chat
+from app.routes import summarizer, chat, realtime_chat
 
 app = FastAPI()
 
@@ -16,3 +16,4 @@ app.add_middleware(
 # Register the router with the correct prefix
 app.include_router(summarizer.router, prefix="/api/summarize", tags=["summarizer"])
 app.include_router(chat.router, prefix="/chatbot")
+app.include_router(realtime_chat.router)
