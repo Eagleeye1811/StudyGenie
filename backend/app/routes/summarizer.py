@@ -1,4 +1,4 @@
-from fastapi import APIRouter, UploadFile, File, Form
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 from app.services import pdf_service, gemini_service, chromadb_service, tts_service, mongodb_service
 from app.models.schemas import SummarizeResponse, QuizQuestion
 from app.services.cloudinary_services import upload_audio_to_cloudinary
@@ -93,3 +93,19 @@ async def get_quiz(summary_id: str):
 async def get_quiz(summary_id: str, score: int = Form(...)):
     """Get quiz for a specific summary"""
     return mongodb_service.get_quiz_submit_summary_id(summary_id,score)
+
+@router.get("/flashcards/{summary_id}")
+async def get_flashcards(summary_id: str):
+    """Generate flashcards for a specific summary"""
+    summary_data = mongodb_service.get_summaries_by_id(summary_id)
+    if not summary_data or not summary_data[0].get("summary"):
+        raise HTTPException(status_code=404, detail="Summary not found")
+    
+    combined = summary_data[0]["summary"]
+    
+    # Generate flashcards using Gemini
+    flashcards = gemini_service.get_precise_bullets(combined, num_bullets=10)
+    if not flashcards:
+        raise HTTPException(status_code=404, detail="Flashcards generation failed")
+    
+    return {"flashcards": flashcards}
