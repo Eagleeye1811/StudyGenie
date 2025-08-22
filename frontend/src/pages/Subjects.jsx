@@ -86,7 +86,7 @@ const Subjects = () => {
           <div className="flex items-center">
             <div>
               <h1 className="text-3xl font-bold text-gray-800">
-                Welcome Back, Vedant!
+                Welcome Back, Molly!
               </h1>
               <p className="text-gray-600 mt-2">
                 Keep up the amazing progress! 

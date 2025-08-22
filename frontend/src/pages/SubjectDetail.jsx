@@ -1,34 +1,34 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, Headphones, Brain} from 'lucide-react';
-import SummaryCard from '../components/SummaryCard';
-import AudioPlayer from '../components/AudioPlayer';
-import axios from 'axios';
-import Loader from "../components/Loader"
+import React, { useState, useEffect } from "react";
+import { Link, useParams } from "react-router-dom";
+import { ArrowLeft, Headphones, Brain } from "lucide-react";
+import SummaryCard from "../components/SummaryCard";
+import AudioPlayer from "../components/AudioPlayer";
+import axios from "axios";
+import Loader from "../components/Loader";
 
 const SubjectDetail = () => {
   const { subjectId } = useParams();
   const [isLoading, setIsLoading] = useState(true);
   const [showAudioPlayer, setShowAudioPlayer] = useState(false);
-  const [response , setResponse] = useState([]);
+  const [response, setResponse] = useState([]);
 
   useEffect(() => {
-  const fetchData = async () =>{
-    try {
-      console.log("hit");
-      
-      setIsLoading(true)
-      const {data}  = await axios.get(`http://localhost:8000/api/summarize/summaries/${subjectId}`)
-      setResponse(data[0]);
-      console.log("Response from server: ",data[0]);
-      setIsLoading(false);
-    
-   } catch (error) {
-    console.log("the error is ",error);
-   }
+    const fetchData = async () => {
+      try {
+        console.log("hit");
 
-  }
-  fetchData();
+        setIsLoading(true);
+        const { data } = await axios.get(
+          `http://localhost:8000/api/summarize/summaries/${subjectId}`
+        );
+        setResponse(data[0]);
+        console.log("Response from server: ", data[0]);
+        setIsLoading(false);
+      } catch (error) {
+        console.log("the error is ", error);
+      }
+    };
+    fetchData();
   }, [subjectId]);
 
   const handleAudioClick = () => {
@@ -39,25 +39,28 @@ const SubjectDetail = () => {
     setShowAudioPlayer(false);
   };
 
-  if(!response?.summary || isLoading){<Loader/>}
-  
+  if (!response?.summary || isLoading) {
+    <Loader />;
+  }
 
   return (
     <div className="min-h-screen p-6">
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center mb-8">
-          <Link to="/" className="mr-4 p-2 rounded-full hover:bg-white/50 transition-colors">
+          <Link
+            to="/"
+            className="mr-4 p-2 rounded-full hover:bg-white/50 transition-colors"
+          >
             <ArrowLeft className="w-6 h-6 text-gray-600" />
           </Link>
           <div>
             <h1 className="text-3xl font-bold text-gray-800">
-               {response.name}
+              {response.name}
             </h1>
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-
           <div className="lg:col-span-2">
             <SummaryCard summary={response.summary} isLoading={isLoading} />
           </div>
@@ -77,12 +80,32 @@ const SubjectDetail = () => {
               <Brain className="w-5 h-5 mr-2" />
               Practice Flashcards
             </Link>
+
+            {/* NEW Buttons */}
+            <Link
+              to={`/practice-quiz/${subjectId}`}
+              className="w-full flex items-center justify-center px-4 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors"
+            >
+              Practice Quiz
+            </Link>
+
+            <Link
+              to={`/exam-quiz/${subjectId}`}
+              className="w-full flex items-center justify-center px-4 py-3 bg-red-500 text-white rounded-xl hover:bg-red-700 transition-colors"
+            >
+              Exam Simulator ⏱️
+            </Link>
           </div>
         </div>
       </div>
 
       {/* Render AudioPlayer when showAudioPlayer is true */}
-      {showAudioPlayer && <AudioPlayer onClose={handleCloseAudio} AudioUrl={response.audio_path} />}
+      {showAudioPlayer && (
+        <AudioPlayer
+          onClose={handleCloseAudio}
+          AudioUrl={response.audio_path}
+        />
+      )}
     </div>
   );
 };

@@ -12,9 +12,9 @@ class SummarizeResponse(BaseModel):
     score: int
     summary: str
     audio_path: str
-    quiz: List[QuizQuestion]
+    #quiz: List[QuizQuestion]
     summary_id: Optional[str] = None
-    quiz_id: Optional[str] = None
+   # quiz_id: Optional[str] = None
 
 class ChatResponse(BaseModel):
     text: str

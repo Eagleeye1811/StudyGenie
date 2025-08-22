@@ -116,3 +116,9 @@ def get_quiz_submit_summary_id(summary_id, score):
     
     return {"message": "Score changed successfully"}
 
+
+def store_timed_quiz_score(summary_id: str, score: int):
+    # Example: store in collection 'timed_quiz_scores'
+    db.timed_quiz_scores.insert_one({"summary_id": summary_id, "score": score})
+    return score
+
