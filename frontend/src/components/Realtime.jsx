@@ -87,29 +87,12 @@ const Realtime = () => {
         <h2 className="text-3xl font-bold text-center mb-6">SmartGenie</h2>
     
 
-      {/* 🔥 Dropdown to switch PDFs (collections) */}
-      <select
-        value={collection}
-        onChange={(e) => setCollection(e.target.value)}
-        className="mb-4 p-2 rounded-md border"
-      >
-        <option value="nmc-regulations">NMC Regulations</option>
-        <option value="mbbs-guide">MBBS Guide</option>
-        <option value="ai-research">AI Research Paper</option>
-      </select>
+  
 
-      <button
-        onMouseDown={startRecording}
-        onMouseUp={stopRecording}
-        className={`px-6 py-3 mb-6 rounded-full font-semibold text-white ${
-          isRecording ? "bg-red-500 shadow-lg" : "bg-blue-600 hover:bg-blue-700"
-        }`}
-      >
-        {isRecording ? "Recording..." : "Hold to Speak"}
-      </button>
+     
 
         {/* GIF Container - Replacing video with image */}
-        <div className="relative w-full aspect-[16/9] mb-8 rounded-2xl overflow-hidden ">
+        <div className="relative w-full aspect-[16/8] mb-8 rounded-xl overflow-hidden ">
           <img
             src="/Conrado-Cotomacio-Via-KLICKPIN-unscreen.gif"
             alt="Voice Interaction Animation"
