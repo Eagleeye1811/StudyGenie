@@ -95,6 +95,13 @@ const SubjectDetail = () => {
             >
               Exam Simulator ⏱️
             </Link>
+
+            <Link
+              to={`/assistant`}
+              className="w-full flex items-center justify-center px-4 py-3 bg-yellow-500 text-white rounded-xl hover:bg-yellow-600 transition-colors"
+            >
+             Genie
+            </Link>
           </div>
         </div>
       </div>

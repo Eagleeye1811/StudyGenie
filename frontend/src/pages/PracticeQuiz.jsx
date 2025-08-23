@@ -61,7 +61,6 @@ const PracticeQuiz = () => {
     }
   };
 
-  // Show loader if fallback question is present
   const isFallback =
     response.length === 1 && response[0].question === "Fallback Question?";
   if (isloading || response.length === 0 || isFallback) {
@@ -70,87 +69,86 @@ const PracticeQuiz = () => {
 
   if (showResult) {
     return (
-      <div className="min-h-screen p-6">
-        <div className="max-w-4xl mx-auto">
-          <div className="bg-white rounded-xl shadow-lg p-8 text-center">
-            <h2 className="text-2xl font-bold mb-4">Quiz Complete! 🎉</h2>
-            <p className="text-xl mb-6">
-              Your Score: {score} out of {response.length}
-            </p>
-            <div className="mb-6 text-left">
-              <h3 className="font-semibold mb-2">Your Answers:</h3>
-              <ul className="space-y-2">
-                {answerResults.map((result, idx) => (
-                  <li
-                    key={idx}
-                    className="p-3 rounded-lg border flex flex-col bg-gray-50"
-                  >
-                    <span className="font-medium">
-                      Q{idx + 1}: {result.question}
+      <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-pink-100 via-purple-100 to-blue-100">
+        <div className="max-w-lg w-full bg-white rounded-2xl shadow-2xl p-8 text-center">
+          <h2 className="text-3xl font-bold mb-4 text-purple-700">
+            Quiz Complete! 🎉
+          </h2>
+          <p className="text-xl mb-6 text-gray-700">
+            Your Score:{" "}
+            <span className="font-bold text-purple-600">
+              {score} / {response.length}
+            </span>
+          </p>
+          <div className="mb-6 text-left">
+            <h3 className="font-semibold mb-2">Your Answers:</h3>
+            <ul className="space-y-3">
+              {answerResults.map((result, idx) => (
+                <li
+                  key={idx}
+                  className="p-4 rounded-xl border bg-gray-50 flex flex-col"
+                >
+                  <span className="font-medium text-gray-800">
+                    Q{idx + 1}: {result.question}
+                  </span>
+                  <span>
+                    Your answer:{" "}
+                    <span
+                      className={
+                        result.isCorrect ? "text-green-600" : "text-red-600"
+                      }
+                    >
+                      {result.selected}
                     </span>
+                  </span>
+                  {!result.isCorrect && (
                     <span>
-                      Your answer:{" "}
-                      <span
-                        className={
-                          result.isCorrect ? "text-green-600" : "text-red-600"
-                        }
-                      >
-                        {result.selected}
-                      </span>
+                      Correct answer:{" "}
+                      <span className="text-green-600">{result.correct}</span>
                     </span>
-                    {!result.isCorrect && (
-                      <span>
-                        Correct answer:{" "}
-                        <span className="text-green-600">{result.correct}</span>
-                      </span>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <Link to="/" className="rounded-full bg-violet-300 p-4">
-              Dashboard
-            </Link>
+                  )}
+                </li>
+              ))}
+            </ul>
           </div>
+          <Link
+            to="/"
+            className="inline-block rounded-full bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 font-semibold shadow-lg hover:opacity-90"
+          >
+            Go to Dashboard
+          </Link>
         </div>
       </div>
     );
   }
 
   const currentQ = response[currentQuestion];
+  const progress = ((currentQuestion + 1) / response.length) * 100;
 
   return (
-    <div className="min-h-screen p-6">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex items-center mb-8 justify-between">
-          <div className="flex items-center">
-            <Link
-              to={`/subject/${subjectId}`}
-              className="mr-4 p-2 rounded-full hover:bg-white/50 transition-colors"
-            >
-              <ArrowLeft className="w-6 h-6 text-gray-600" />
-            </Link>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-800">
-                Practice Quiz
-              </h1>
-              <p className="text-gray-600 mt-2">
-                Question {currentQuestion + 1} of {response.length}
-              </p>
-            </div>
-          </div>
+    <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-pink-100 via-purple-100 to-blue-100">
+      <div className="max-w-lg w-full">
+        {/* Progress Bar */}
+        <div className="w-full bg-gray-200 rounded-full h-3 mb-6 shadow-inner">
+          <div
+            className="bg-gradient-to-r from-purple-500 to-pink-500 h-3 rounded-full transition-all"
+            style={{ width: `${progress}%` }}
+          ></div>
         </div>
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <h2 className="text-xl font-semibold mb-6">{currentQ.question}</h2>
-          <div className="space-y-3">
+
+        <div className="bg-white rounded-2xl shadow-xl p-8">
+          <h2 className="text-xl font-semibold mb-6 text-gray-800">
+            {currentQ.question}
+          </h2>
+          <div className="space-y-4">
             {currentQ.options.map((option, index) => (
               <button
                 key={index}
                 onClick={() => handleAnswerSelect(option)}
-                className={`w-full p-4 text-left rounded-lg border transition-all ${
+                className={`w-full p-4 text-left rounded-xl border transition-all duration-200 shadow-sm ${
                   selectedAnswer === option
-                    ? "border-blue-500 bg-blue-50"
-                    : "border-gray-200 hover:border-gray-300"
+                    ? "border-purple-500 bg-purple-50 ring-2 ring-purple-300"
+                    : "border-gray-200 hover:border-purple-300 hover:bg-gray-50"
                 }`}
               >
                 {option}
@@ -160,9 +158,9 @@ const PracticeQuiz = () => {
           <button
             onClick={handleNext}
             disabled={!selectedAnswer}
-            className={`mt-6 w-full flex items-center justify-center px-6 py-3 rounded-xl transition-colors ${
+            className={`mt-8 w-full flex items-center justify-center px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-md ${
               selectedAnswer
-                ? "bg-blue-600 hover:bg-blue-700 text-white"
+                ? "bg-gradient-to-r from-purple-500 to-pink-500 hover:opacity-90 text-white"
                 : "bg-gray-100 text-gray-400 cursor-not-allowed"
             }`}
           >
