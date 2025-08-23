@@ -1,12 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 import CreateContentModal from "../components/CreateContentModal";
-import { Plus,Target } from 'lucide-react';
-import SubjectCard from '../components/SubjectCard';
-import LineChart from '../components/LineChart';
-import PieChart from '../components/PieChart';
+import { Plus, Target } from "lucide-react";
+import SubjectCard from "../components/SubjectCard";
+import LineChart from "../components/LineChart";
+import PieChart from "../components/PieChart";
+import { useAuth } from "../context/AuthContext";
 
 const Subjects = () => {
+  const { currentUser, loading: authLoading } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [subjects, setSubjects] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -14,14 +16,25 @@ const Subjects = () => {
 
   // Color palette for dynamic assignment
   const colorClasses = [
-     '#3B82F6', '#8B5CF6', '#10B981', '#F59E0B',
-    '#EF4444', '#6366F1', '#6B7280'
+    "#3B82F6",
+    "#8B5CF6",
+    "#10B981",
+    "#F59E0B",
+    "#EF4444",
+    "#6366F1",
+    "#6B7280",
   ];
 
   const colorClass = [
-     'bg-blue-500', 'bg-purple-500', 'bg-green-500', 
-    'bg-orange-500', 'bg-red-500', 'bg-indigo-500',
-    'bg-pink-500', 'bg-yellow-500', 'bg-teal-500'
+    "bg-blue-500",
+    "bg-purple-500",
+    "bg-green-500",
+    "bg-orange-500",
+    "bg-red-500",
+    "bg-indigo-500",
+    "bg-pink-500",
+    "bg-yellow-500",
+    "bg-teal-500",
   ];
 
   // Fetch subjects from MongoDB
@@ -29,8 +42,10 @@ const Subjects = () => {
     const fetchSubjects = async () => {
       try {
         setLoading(true);
-        const response = await axios.get('http://localhost:8000/api/summarize/summaries');
-        
+        const response = await axios.get(
+          "http://localhost:8000/api/summarize/summaries"
+        );
+
         // Transform MongoDB data to match our subject format
         const transformedSubjects = response.data.map((item, index) => ({
           id: item._id,
@@ -38,17 +53,17 @@ const Subjects = () => {
           color: colorClass[index % colorClass.length], // Tailwind class for SubjectCard
           hexColor: colorClasses[index % colorClasses.length], // Hex code for PieChart
           points: item.score || 0,
-          accuracy: ((item.score)/5)*100,
+          accuracy: (item.score / 5) * 100,
           summary: item.summary,
           audio_path: item.audio_path,
-          percentage: ((item.score)/5)*100
+          percentage: (item.score / 5) * 100,
         }));
-        
+
         setSubjects(transformedSubjects);
         setError(null);
       } catch (err) {
-        console.error('Error fetching subjects:', err);
-        setError('Failed to load subjects. Please try again later.');
+        console.error("Error fetching subjects:", err);
+        setError("Failed to load subjects. Please try again later.");
       } finally {
         setLoading(false);
       }
@@ -57,7 +72,15 @@ const Subjects = () => {
     fetchSubjects();
   }, []);
 
-  
+  // Helper function to get user's first name
+  const getUserFirstName = () => {
+    if (!currentUser?.name) return "Student";
+
+    // Split name and get first part
+    const firstName = currentUser.name.split(" ")[0];
+    // Capitalize first letter
+    return firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase();
+  };
 
   // Calculate total XP
   const totalXP = subjects.reduce((sum, subject) => sum + subject.points, 0);
@@ -72,9 +95,9 @@ const Subjects = () => {
       points: newContent.score || 0,
       accuracy: 0,
       summary: newContent.summary,
-      audio_path: newContent.audio_path
+      audio_path: newContent.audio_path,
     };
-    
+
     setSubjects([...subjects, newSubject]);
   };
 
@@ -86,10 +109,14 @@ const Subjects = () => {
           <div className="flex items-center">
             <div>
               <h1 className="text-3xl font-bold text-gray-800">
-                Welcome Back, Molly!
+                {authLoading ? (
+                  <span className="animate-pulse bg-gray-200 rounded h-8 w-64 inline-block"></span>
+                ) : (
+                  `Welcome Back, ${getUserFirstName()}!`
+                )}
               </h1>
               <p className="text-gray-600 mt-2">
-                Keep up the amazing progress! 
+                Keep up the amazing progress!
               </p>
             </div>
           </div>
@@ -117,7 +144,7 @@ const Subjects = () => {
         {/* Subjects Section */}
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-gray-800 mb-4">
-          Your Subjects 
+            Your Subjects
           </h2>
         </div>
 
@@ -132,7 +159,9 @@ const Subjects = () => {
         ) : subjects.length === 0 ? (
           <div className="text-center text-gray-500 p-8">
             <p className="text-xl">No subjects found</p>
-            <p className="mt-2">Click on "Create Content" to add your first subject</p>
+            <p className="mt-2">
+              Click on "Create Content" to add your first subject
+            </p>
           </div>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
