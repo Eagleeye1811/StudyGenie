@@ -63,80 +63,81 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="navbar">
+    <nav className="navbar flex items-center justify-between">
       <Link to="/" className="logo">
         StudyGenie
       </Link>
 
-      {/* Language Selector */}
-      <div className="lang">
-        <select id="languageSelect" onChange={handleLanguageChange}>
-          <option value="en">English</option>
-          <option value="mr">Marathi</option>
-          <option value="hi">Hindi</option>
-          <option value="ta">Tamil</option>
-          <option value="bn">Bengali</option>
-          <option value="te">Telugu</option>
-          <option value="ml">Malayalam</option>
-          <option value="gu">Gujarati</option>
-          <option value="kn">Kannada</option>
-        </select>
-      </div>
-
-      {/* Authentication Section */}
-      <div className="auth-section">
-        {currentUser ? (
-          <div className="user-dropdown" ref={dropdownRef}>
-            <button className="user-button" onClick={toggleDropdown}>
-              <span className="user-name">{currentUser.name}</span>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="dropdown-arrow"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
-            </button>
-            {isDropdownOpen && (
-              <div className="dropdown-menu">
-                <div className="dropdown-content">
-                  <Link
-                    to="/dashboard"
-                    className="dropdown-item"
-                    onClick={() => setIsDropdownOpen(false)}
-                  >
-                    Profile
-                  </Link>
-                  <button
-                    onClick={() => {
-                      setIsDropdownOpen(false);
-                      handleLogout();
-                    }}
-                    className="dropdown-item logout-btn"
-                  >
-                    Logout
-                  </button>
+      <div className="flex items-center gap-4">
+        {/* Authentication Section */}
+        <div className="auth-section flex items-center gap-2">
+          {currentUser ? (
+            <div className="user-dropdown" ref={dropdownRef}>
+              <button className="user-button" onClick={toggleDropdown}>
+                <span className="user-name">{currentUser.name}</span>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="dropdown-arrow"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 9l-7 7-7-7"
+                  />
+                </svg>
+              </button>
+              {isDropdownOpen && (
+                <div className="dropdown-menu">
+                  <div className="dropdown-content">
+                    <Link
+                      to="/dashboard"
+                      className="dropdown-item"
+                      onClick={() => setIsDropdownOpen(false)}
+                    >
+                      Profile
+                    </Link>
+                    <button
+                      onClick={() => {
+                        setIsDropdownOpen(false);
+                        handleLogout();
+                      }}
+                      className="dropdown-item logout-btn"
+                    >
+                      Logout
+                    </button>
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="auth-buttons">
-            <Link to="/login" className="auth-btn login-btn">
-              Login
-            </Link>
-            <Link to="/register" className="auth-btn register-btn">
-              Register
-            </Link>
-          </div>
-        )}
+              )}
+            </div>
+          ) : (
+            <div className="auth-buttons flex items-center gap-2">
+              <Link to="/login" className="auth-btn login-btn">
+                Login
+              </Link>
+              <Link to="/register" className="auth-btn register-btn">
+                Register
+              </Link>
+            </div>
+          )}
+        </div>
+        {/* Language Selector - moved to right beside auth buttons */}
+        <div className="lang">
+          <select id="languageSelect" onChange={handleLanguageChange}>
+            <option value="en">English</option>
+            <option value="mr">Marathi</option>
+            <option value="hi">Hindi</option>
+            <option value="ta">Tamil</option>
+            <option value="bn">Bengali</option>
+            <option value="te">Telugu</option>
+            <option value="ml">Malayalam</option>
+            <option value="gu">Gujarati</option>
+            <option value="kn">Kannada</option>
+          </select>
+        </div>
       </div>
     </nav>
   );
