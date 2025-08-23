@@ -12,58 +12,69 @@ active_sessions = {}
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     session_id = id(websocket)
-    active_sessions[session_id] = {"context": ""}
+    active_sessions[session_id] = {"context": "", "collection": None}
 
     try:
         while True:
-            data = await websocket.receive_bytes()
+            message = await websocket.receive()
 
-            # 1️⃣ Save raw browser audio (WebM/Opus) temporarily
-            with tempfile.NamedTemporaryFile(suffix=".webm", delete=False) as tmp_webm:
-                tmp_webm.write(data)
-                tmp_webm_path = tmp_webm.name
+            # If frontend sends JSON (text message)
+            if "text" in message:
+                data = message["text"]
+                if data.startswith("SET_COLLECTION:"):
+                    collection_name = data.replace("SET_COLLECTION:", "").strip()
+                    active_sessions[session_id]["collection"] = collection_name
+                    continue
 
-            # 2️⃣ Convert WebM -> WAV mono PCM using ffmpeg
-            tmp_wav_path = tmp_webm_path.replace(".webm", ".wav")
-            subprocess.run([
-                "ffmpeg", "-y", "-i", tmp_webm_path, "-ar", "16000", "-ac", "1", tmp_wav_path
-            ], check=True)
+            # If frontend sends audio (binary)
+            if "bytes" in message:
+                data = message["bytes"]
 
-            # 3️⃣ STT: convert WAV to text
-            user_query = stt_service.speech_to_text(tmp_wav_path)
+                # same as your flow...
+                with tempfile.NamedTemporaryFile(suffix=".webm", delete=False) as tmp_webm:
+                    tmp_webm.write(data)
+                    tmp_webm_path = tmp_webm.name
 
-            # Clean up temp files
-            os.remove(tmp_webm_path)
-            os.remove(tmp_wav_path)
+                tmp_wav_path = tmp_webm_path.replace(".webm", ".wav")
+                subprocess.run([
+                    "ffmpeg", "-y", "-i", tmp_webm_path, "-ar", "16000", "-ac", "1", tmp_wav_path
+                ], check=True)
 
-            if not user_query.strip():
-                continue
+                user_query = stt_service.speech_to_text(tmp_wav_path)
 
-            # 4️⃣ Optional: send recognized text back to frontend
-            await websocket.send_json({"type": "user", "content": user_query})
+                os.remove(tmp_webm_path)
+                os.remove(tmp_wav_path)
 
-            # 5️⃣ RAG: retrieve context
-            user_session = active_sessions[session_id]
-            previous_context = user_session.get("context", "")
-            rag_context = rag_service.retrieve_context(user_query)
-            combined_context = f"{previous_context} {rag_context}".strip()
+                if not user_query.strip():
+                    continue
 
-            # 6️⃣ LLM: generate answer
-            answer = gemini_service.get_answer(user_query, combined_context)
+                await websocket.send_json({"type": "user", "content": user_query})
 
-            # Update session context
-            user_session["context"] = combined_context + " " + answer
+                # ✅ Use dynamic collection
+                user_session = active_sessions[session_id]
+                collection_name = user_session.get("collection")
+                if not collection_name:
+                    await websocket.send_json({
+                        "type": "error",
+                        "message": "No collection selected. Please set collection first."
+                    })
+                    continue
 
-            # 7️⃣ TTS: convert answer to audio bytes
-            audio_bytes = tts_service.text_to_speech_bytes(answer)
-            audio_b64 = base64.b64encode(audio_bytes).decode("utf-8")
+                rag_context = rag_service.retrieve_context(user_query, collection_name)
+                combined_context = f"{user_session['context']} {rag_context}".strip()
 
-            # 8️⃣ Send both text + audio to frontend
-            await websocket.send_json({
-                "type": "assistant",
-                "text": answer,
-                "audio": audio_b64
-            })
+                answer = gemini_service.get_answer(user_query, combined_context)
+
+                user_session["context"] = combined_context + " " + answer
+
+                audio_bytes = tts_service.text_to_speech_bytes(answer)
+                audio_b64 = base64.b64encode(audio_bytes).decode("utf-8")
+
+                await websocket.send_json({
+                    "type": "assistant",
+                    "text": answer,
+                    "audio": audio_b64
+                })
 
     except WebSocketDisconnect:
         active_sessions.pop(session_id, None)

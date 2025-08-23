@@ -1,17 +1,13 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
 import Loader from "../components/Loader";
 
 const Flashcards = () => {
   const { subjectId } = useParams();
   const [cards, setCards] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [flipped, setFlipped] = useState(false);
   const [current, setCurrent] = useState(0);
-  const [slide, setSlide] = useState("");
-  // const [transitioning, setTransitioning] = useState(false);
-  const cardRef = useRef(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -20,12 +16,12 @@ const Flashcards = () => {
         const data = await fetch(
           `http://localhost:8000/api/summarize/flashcards/${subjectId}`
         ).then((res) => res.json());
-        // Use Gemini-generated precise bullets
-        if (data && Array.isArray(data.bullets)) {
-          // Group bullets into sets of 3 per card
+        // Use Gemini-generated precise flashcards
+        if (data && Array.isArray(data.flashcards)) {
+          // Group flashcards into sets of 3 per card
           const grouped = [];
-          for (let i = 0; i < data.bullets.length; i += 3) {
-            grouped.push(data.bullets.slice(i, i + 3));
+          for (let i = 0; i < data.flashcards.length; i += 3) {
+            grouped.push(data.flashcards.slice(i, i + 3));
           }
           setCards(
             grouped.map((group, idx) => ({
@@ -50,35 +46,15 @@ const Flashcards = () => {
     fetchData();
   }, [subjectId]);
 
-  const handleFlip = () => {
-    setFlipped((f) => !f);
-  };
-
   const handleNext = () => {
     if (current < cards.length - 1) {
-      setFlipped(false);
-      setTimeout(() => {
-        setSlide("slide-out-left");
-        setTimeout(() => {
-          setCurrent((c) => c + 1);
-          setSlide("slide-in-right");
-          setTimeout(() => setSlide(""), 350);
-        }, 350);
-      }, 500); // wait for flip
+      setCurrent((c) => c + 1);
     }
   };
 
   const handlePrev = () => {
     if (current > 0) {
-      setFlipped(false);
-      setTimeout(() => {
-        setSlide("slide-out-right");
-        setTimeout(() => {
-          setCurrent((c) => c - 1);
-          setSlide("slide-in-left");
-          setTimeout(() => setSlide(""), 350);
-        }, 350);
-      }, 500);
+      setCurrent((c) => c - 1);
     }
   };
 
@@ -86,110 +62,146 @@ const Flashcards = () => {
     return <Loader />;
   }
 
-  const card = cards[current];
-
   return (
-    <div className="min-h-screen p-6 flex flex-col items-center justify-center">
-      <div className="max-w-xl w-full">
-        <div className="flex items-center mb-8">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-blue-100 to-white">
+      <div className="max-w-2xl w-full">
+        <div
+          className="flex items-center gap-2"
+          style={{ position: "absolute", top: 32, left: 32, zIndex: 30 }}
+        >
           <Link
             to={`/subject/${subjectId}`}
-            className="mr-4 p-2 rounded-full hover:bg-white/50 transition-colors"
+            className="p-2 rounded-full hover:bg-blue-300 transition-all flex items-center"
+            style={{ boxShadow: "0 4px 16px 0 rgba(31, 38, 135, 0.17)" }}
           >
-            <ArrowLeft className="w-6 h-6 text-gray-600" />
+            <ArrowLeft className="w-6 h-6 text-black" />
           </Link>
-          <h1 className="text-3xl font-bold text-gray-800">Flashcards</h1>
-        </div>
-        <div className="flex flex-col items-center">
-          <div
-            className="perspective mb-6"
-            style={{ perspective: "1000px", width: "100%" }}
+          <span
+            className="text-3xl font-semibold text-black tracking-wide"
+            style={{
+              fontFamily: "Inter, Montserrat, Arial, sans-serif",
+              letterSpacing: "1px",
+            }}
           >
-            <div
-              ref={cardRef}
-              className={`relative w-full h-56 transition-transform duration-500 transform ${
-                flipped ? "rotate-y-180" : ""
-              } ${slide}`}
-              style={{ transformStyle: "preserve-3d" }}
-              onClick={handleFlip}
-            >
-              {/* Front */}
-              <div
-                className="absolute w-full h-full flex items-center justify-center bg-blue-600 text-white rounded-xl shadow-lg cursor-pointer backface-hidden text-2xl font-semibold"
-                style={{ backfaceVisibility: "hidden" }}
-              >
-                {card.front}
-              </div>
-              {/* Back */}
-              <div
-                className="absolute w-full h-full flex items-center justify-center bg-white text-blue-700 rounded-xl shadow-lg cursor-pointer backface-hidden text-lg font-normal px-6"
-                style={{
-                  transform: "rotateY(180deg)",
-                  backfaceVisibility: "hidden",
-                }}
-              >
-                {card.back}
-              </div>
-            </div>
+            Flashcards
+          </span>
+        </div>
+        <div className="relative flex items-center justify-center h-[28rem] select-none">
+          {/* Left Arrow */}
+          <button
+            onClick={handlePrev}
+            disabled={current === 0}
+            className={`absolute left-0 z-10 p-4 rounded-full bg-white/90 hover:bg-white shadow-lg transition-all ${
+              current === 0 ? "opacity-50 cursor-not-allowed" : ""
+            }`}
+            style={{ top: "50%", transform: "translateY(-50%)" }}
+          >
+            <ChevronLeft className="w-10 h-10 text-blue-600" />
+          </button>
+          {/* Cards Carousel */}
+          <div className="flex items-center justify-center w-full h-full">
+            {cards.map((card, idx) => {
+              const offset = idx - current;
+              const isActive = offset === 0;
+              const isPrev = offset === -1;
+              const isNext = offset === 1;
+              return (
+                <div
+                  key={idx}
+                  className={`absolute card-shadow transition-transform duration-300 ${
+                    isActive
+                      ? "z-20"
+                      : isPrev
+                      ? "z-10"
+                      : isNext
+                      ? "z-10"
+                      : "z-0 pointer-events-none"
+                  }`}
+                  style={{
+                    left: isActive
+                      ? "50%"
+                      : isPrev
+                      ? "30%"
+                      : isNext
+                      ? "70%"
+                      : "50%",
+                    top: "50%",
+                    transform: isActive
+                      ? "translate(-50%, -50%) scale(1)"
+                      : isPrev
+                      ? "translate(-50%, -50%) scale(0.9)"
+                      : isNext
+                      ? "translate(-50%, -50%) scale(0.9)"
+                      : "translate(-50%, -50%) scale(0.85)",
+                    width: isActive ? "420px" : "320px",
+                    height: isActive ? "400px" : "340px",
+                    background: isActive
+                      ? "linear-gradient(135deg, #fff 80%, #e0f2fe 100%)"
+                      : "linear-gradient(135deg, #f3e7e9 80%, #e0f2fe 100%)",
+                    boxShadow: isActive
+                      ? "0 12px 40px 0 rgba(31, 38, 135, 0.37)"
+                      : "0 4px 16px 0 rgba(31, 38, 135, 0.17)",
+                    borderRadius: "32px",
+                    padding: "40px 32px",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    cursor: isActive ? "pointer" : "default",
+                    // No transition or animation
+                    overflow: "hidden",
+                  }}
+                >
+                  <div
+                    className={`text-3xl font-extrabold text-blue-600 mb-6 text-center tracking-wide`}
+                    style={{ letterSpacing: "1px" }}
+                  >
+                    {card.front}
+                  </div>
+                  <div
+                    className={`text-lg text-gray-700 text-center w-full font-mono fadein-text`}
+                    style={{
+                      wordBreak: "break-word",
+                      fontFamily: "Montserrat, Arial, sans-serif",
+                    }}
+                  >
+                    {card.back}
+                  </div>
+                </div>
+              );
+            })}
           </div>
-          <div className="flex justify-between w-full mt-2">
-            <button
-              onClick={handlePrev}
-              disabled={current === 0}
-              className={`px-6 py-2 rounded-lg font-semibold transition-colors ${
-                current === 0
-                  ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                  : "bg-blue-600 text-white hover:bg-blue-700"
-              }`}
-            >
-              Previous
-            </button>
-            <span className="text-lg font-medium text-gray-700">
-              {current + 1} / {cards.length}
-            </span>
-            <button
-              onClick={handleNext}
-              disabled={current === cards.length - 1}
-              className={`px-6 py-2 rounded-lg font-semibold transition-colors ${
-                current === cards.length - 1
-                  ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                  : "bg-blue-600 text-white hover:bg-blue-700"
-              }`}
-            >
-              Next
-            </button>
-          </div>
+          {/* Right Arrow */}
+          <button
+            onClick={handleNext}
+            disabled={current === cards.length - 1}
+            className={`absolute right-0 z-10 p-4 rounded-full bg-white/90 hover:bg-white shadow-lg transition-all ${
+              current === cards.length - 1
+                ? "opacity-50 cursor-not-allowed"
+                : ""
+            }`}
+            style={{ top: "50%", transform: "translateY(-50%)" }}
+          >
+            <ChevronRight className="w-10 h-10 text-blue-600" />
+          </button>
+        </div>
+        <div className="flex justify-center mt-8">
+          <span className="text-xl font-bold text-white drop-shadow-lg tracking-wide">
+            {current + 1} / {cards.length}
+          </span>
         </div>
         <style>{`
-          .rotate-y-180 { transform: rotateY(180deg); }
-          .perspective { perspective: 1000px; }
-          .slide-in-right {
-            animation: slideInRight 0.35s forwards;
+          .card-shadow {
+            box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.37);
           }
-          .slide-in-left {
-            animation: slideInLeft 0.35s forwards;
+          .fadein-text {
+            opacity: 0;
+            animation: fadein 1.2s forwards;
           }
-          .slide-out-left {
-            animation: slideOutLeft 0.35s forwards;
-          }
-          .slide-out-right {
-            animation: slideOutRight 0.35s forwards;
-          }
-          @keyframes slideInRight {
-            from { opacity: 0; transform: translateX(60px); }
-            to { opacity: 1; transform: translateX(0); }
-          }
-          @keyframes slideInLeft {
-            from { opacity: 0; transform: translateX(-60px); }
-            to { opacity: 1; transform: translateX(0); }
-          }
-          @keyframes slideOutLeft {
-            from { opacity: 1; transform: translateX(0); }
-            to { opacity: 0; transform: translateX(-60px); }
-          }
-          @keyframes slideOutRight {
-            from { opacity: 1; transform: translateX(0); }
-            to { opacity: 0; transform: translateX(60px); }
+          @keyframes fadein {
+            to {
+              opacity: 1;
+            }
           }
         `}</style>
       </div>

@@ -2,6 +2,7 @@
   max-width: 1280px;
   margin: 0 auto;
   padding: 2rem;
+  padding-top: 4rem; /* Add padding to avoid overlap with navbar */
   text-align: center;
 }
 
@@ -40,3 +41,14 @@
 .read-the-docs {
   color: #888;
 }
+
+/* Hide Google top frame */
+.goog-te-banner-frame.skiptranslate {
+  display: none !important;
+}
+
+/* Push content back up after removing frame */
+body {
+  top: 0px !important;
+}
+

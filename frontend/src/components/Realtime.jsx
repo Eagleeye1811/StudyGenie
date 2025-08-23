@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 
 const Realtime = () => {
   const [messages, setMessages] = useState([]);
+  const [collection, setCollection] = useState("nmc-regulations"); // 🔥 active PDF collection
   const ws = useRef(null);
   const audioChunks = useRef([]);
   const mediaRecorder = useRef(null);
@@ -11,28 +12,22 @@ const Realtime = () => {
   useEffect(() => {
     ws.current = new WebSocket("ws://127.0.0.1:8000/ws/assistant");
 
+    ws.current.onopen = () => {
+      // 🔥 tell backend which collection to use
+      ws.current.send(`SET_COLLECTION:${collection}`);
+    };
+
     ws.current.onmessage = async (event) => {
       try {
         const data = JSON.parse(event.data);
 
         if (data.type === "user") {
-          // Display the spoken query
-          setMessages((prev) => [
-            ...prev,
-            { type: "user", content: data.content },
-          ]);
+          setMessages((prev) => [...prev, { type: "user", content: data.content }]);
         } else if (data.type === "assistant") {
-          // Display the LLM response
-          setMessages((prev) => [
-            ...prev,
-            { type: "assistant", content: data.text },
-          ]);
+          setMessages((prev) => [...prev, { type: "assistant", content: data.text }]);
 
-          // Play audio if available
           if (data.audio) {
-            const audioBytes = Uint8Array.from(atob(data.audio), (c) =>
-              c.charCodeAt(0)
-            );
+            const audioBytes = Uint8Array.from(atob(data.audio), c => c.charCodeAt(0));
             const audioBlob = new Blob([audioBytes], { type: "audio/wav" });
             const audioUrl = URL.createObjectURL(audioBlob);
             const audio = new Audio(audioUrl);
@@ -40,21 +35,17 @@ const Realtime = () => {
           }
         }
       } catch {
-        // fallback in case something is raw audio
         const audioBlob = new Blob([event.data], { type: "audio/wav" });
         const audioUrl = URL.createObjectURL(audioBlob);
         const audio = new Audio(audioUrl);
         audio.play();
 
-        setMessages((prev) => [
-          ...prev,
-          { type: "assistant", content: "Voice response..." },
-        ]);
+        setMessages((prev) => [...prev, { type: "assistant", content: "Voice response..." }]);
       }
     };
 
     return () => ws.current.close();
-  }, []);
+  }, [collection]); // 🔥 re-run if collection changes
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -63,29 +54,29 @@ const Realtime = () => {
   const startRecording = async () => {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     mediaRecorder.current = new MediaRecorder(stream);
-    audioChunks.current = []; // Reset chunks
+    audioChunks.current = [];
 
     mediaRecorder.current.ondataavailable = (e) => {
-      if (e.data.size > 0) audioChunks.current.push(e.data); // collect all chunks
+      if (e.data.size > 0) audioChunks.current.push(e.data);
     };
 
     mediaRecorder.current.onstop = () => {
       const blob = new Blob(audioChunks.current, { type: "audio/webm" });
       blob.arrayBuffer().then((buffer) => {
         if (ws.current.readyState === WebSocket.OPEN) {
-          ws.current.send(buffer); // send full recording once
+          ws.current.send(buffer);
         }
       });
       audioChunks.current = [];
     };
 
-    mediaRecorder.current.start(); // no interval, just record full audio
+    mediaRecorder.current.start();
     setIsRecording(true);
   };
 
   const stopRecording = () => {
     if (mediaRecorder.current && mediaRecorder.current.state !== "inactive") {
-      mediaRecorder.current.stop(); // triggers onstop
+      mediaRecorder.current.stop();
       setIsRecording(false);
     }
   };
@@ -94,6 +85,28 @@ const Realtime = () => {
     <div className="min-h-screen bg-gradient-to-b from-purple-100 to-blue-100 p-6">
       <div className="max-w-2xl mx-auto">
         <h2 className="text-3xl font-bold text-center mb-6">SmartGenie</h2>
+    
+
+      {/* 🔥 Dropdown to switch PDFs (collections) */}
+      <select
+        value={collection}
+        onChange={(e) => setCollection(e.target.value)}
+        className="mb-4 p-2 rounded-md border"
+      >
+        <option value="nmc-regulations">NMC Regulations</option>
+        <option value="mbbs-guide">MBBS Guide</option>
+        <option value="ai-research">AI Research Paper</option>
+      </select>
+
+      <button
+        onMouseDown={startRecording}
+        onMouseUp={stopRecording}
+        className={`px-6 py-3 mb-6 rounded-full font-semibold text-white ${
+          isRecording ? "bg-red-500 shadow-lg" : "bg-blue-600 hover:bg-blue-700"
+        }`}
+      >
+        {isRecording ? "Recording..." : "Hold to Speak"}
+      </button>
 
         {/* GIF Container - Replacing video with image */}
         <div className="relative w-full aspect-[16/9] mb-8 rounded-2xl overflow-hidden ">
