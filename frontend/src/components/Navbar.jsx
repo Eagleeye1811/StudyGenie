@@ -8,6 +8,7 @@ const Navbar = () => {
   const navigate = useNavigate();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
+
   const handleLogout = () => {
     logout();
     navigate("/login");
@@ -71,7 +72,7 @@ const Navbar = () => {
       <div className="flex items-center gap-4">
         {/* Authentication Section */}
         <div className="auth-section flex items-center gap-2">
-          {currentUser ? (
+          {currentUser && (
             <div className="user-dropdown" ref={dropdownRef}>
               <button className="user-button" onClick={toggleDropdown}>
                 <span className="user-name">{currentUser.name}</span>
@@ -113,18 +114,10 @@ const Navbar = () => {
                 </div>
               )}
             </div>
-          ) : (
-            <div className="auth-buttons flex items-center gap-2">
-              <Link to="/login" className="auth-btn login-btn">
-                Login
-              </Link>
-              <Link to="/register" className="auth-btn register-btn">
-                Register
-              </Link>
-            </div>
           )}
         </div>
-        {/* Language Selector - moved to right beside auth buttons */}
+
+        {/* Language Selector */}
         <div className="lang">
           <select id="languageSelect" onChange={handleLanguageChange}>
             <option value="en">English</option>
