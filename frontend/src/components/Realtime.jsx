@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import ReactMarkdown from "react-markdown";
 
 const Realtime = () => {
   const [messages, setMessages] = useState([]);
@@ -7,6 +8,9 @@ const Realtime = () => {
   const audioChunks = useRef([]);
   const mediaRecorder = useRef(null);
   const [isRecording, setIsRecording] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false); // 🔥 Processing state
+  const [isAssistantSpeaking, setIsAssistantSpeaking] = useState(false); // 🔥 Speaking state
+  const currentAudio = useRef(null); // 🔥 Track current audio for interruption
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
@@ -22,25 +26,56 @@ const Realtime = () => {
         const data = JSON.parse(event.data);
 
         if (data.type === "user") {
-          setMessages((prev) => [...prev, { type: "user", content: data.content }]);
+          setMessages((prev) => [
+            ...prev,
+            { type: "user", content: data.content },
+          ]);
+          setIsProcessing(true); // 🔥 Start processing when user message received
         } else if (data.type === "assistant") {
-          setMessages((prev) => [...prev, { type: "assistant", content: data.text }]);
+          setIsProcessing(false); // 🔥 Stop processing when assistant responds
+          setMessages((prev) => [
+            ...prev,
+            { type: "assistant", content: data.text },
+          ]);
 
           if (data.audio) {
-            const audioBytes = Uint8Array.from(atob(data.audio), c => c.charCodeAt(0));
+            setIsAssistantSpeaking(true); // 🔥 Assistant starts speaking
+            const audioBytes = Uint8Array.from(atob(data.audio), (c) =>
+              c.charCodeAt(0)
+            );
             const audioBlob = new Blob([audioBytes], { type: "audio/wav" });
             const audioUrl = URL.createObjectURL(audioBlob);
             const audio = new Audio(audioUrl);
+            currentAudio.current = audio; // 🔥 Store reference for interruption
+
+            // Handle audio end
+            audio.onended = () => {
+              setIsAssistantSpeaking(false);
+              currentAudio.current = null;
+            };
+
             audio.play();
           }
         }
       } catch {
+        setIsProcessing(false); // 🔥 Stop processing on error
         const audioBlob = new Blob([event.data], { type: "audio/wav" });
         const audioUrl = URL.createObjectURL(audioBlob);
         const audio = new Audio(audioUrl);
-        audio.play();
 
-        setMessages((prev) => [...prev, { type: "assistant", content: "Voice response..." }]);
+        setIsAssistantSpeaking(true);
+        currentAudio.current = audio;
+
+        audio.onended = () => {
+          setIsAssistantSpeaking(false);
+          currentAudio.current = null;
+        };
+
+        audio.play();
+        setMessages((prev) => [
+          ...prev,
+          { type: "assistant", content: "Voice response..." },
+        ]);
       }
     };
 
@@ -52,6 +87,17 @@ const Realtime = () => {
   }, [messages]);
 
   const startRecording = async () => {
+    // 🔥 Interrupt assistant if speaking
+    if (isAssistantSpeaking && currentAudio.current) {
+      currentAudio.current.pause();
+      currentAudio.current.currentTime = 0;
+      setIsAssistantSpeaking(false);
+      currentAudio.current = null;
+    }
+
+    // 🔥 Reset processing state when user starts speaking
+    setIsProcessing(false);
+
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     mediaRecorder.current = new MediaRecorder(stream);
     audioChunks.current = [];
@@ -85,11 +131,6 @@ const Realtime = () => {
     <div className="min-h-screen bg-gradient-to-b from-purple-100 to-blue-100 p-6">
       <div className="max-w-2xl mx-auto">
         <h2 className="text-3xl font-bold text-center mb-6">SmartGenie</h2>
-    
-
-  
-
-     
 
         {/* GIF Container - Replacing video with image */}
         <div className="relative w-full aspect-[16/8] mb-8 rounded-xl overflow-hidden ">
@@ -101,17 +142,56 @@ const Realtime = () => {
         </div>
 
         {/* Voice Control Button */}
-        <div className="flex justify-center mb-8">
+        <div className="flex flex-col items-center mb-8">
+          {/* Status Indicator */}
+          {(isProcessing || isAssistantSpeaking) && (
+            <div className="mb-4 flex items-center space-x-2">
+              {isProcessing && (
+                <>
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                  <span className="text-blue-600 font-medium">
+                    Processing your request...
+                  </span>
+                </>
+              )}
+              {isAssistantSpeaking && !isProcessing && (
+                <>
+                  <div className="flex space-x-1">
+                    <div className="w-2 h-2 bg-green-500 rounded-full animate-bounce"></div>
+                    <div
+                      className="w-2 h-2 bg-green-500 rounded-full animate-bounce"
+                      style={{ animationDelay: "0.1s" }}
+                    ></div>
+                    <div
+                      className="w-2 h-2 bg-green-500 rounded-full animate-bounce"
+                      style={{ animationDelay: "0.2s" }}
+                    ></div>
+                  </div>
+                  <span className="text-green-600 font-medium">
+                    Assistant is speaking...
+                  </span>
+                </>
+              )}
+            </div>
+          )}
+
           <button
             onMouseDown={startRecording}
             onMouseUp={stopRecording}
-            className={`px-8 py-4 rounded-full font-semibold text-white transition-all transform hover:scale-105 ${
+            disabled={isProcessing}
+            className={`px-8 py-4 rounded-full font-semibold text-white transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed ${
               isRecording
                 ? "bg-red-500 shadow-lg animate-pulse"
+                : isAssistantSpeaking
+                ? "bg-orange-500 hover:bg-orange-600 shadow-md"
                 : "bg-blue-600 hover:bg-blue-700 shadow-md"
             }`}
           >
-            {isRecording ? "Recording..." : "Hold to Speak"}
+            {isRecording
+              ? "Recording..."
+              : isAssistantSpeaking
+              ? "Interrupt & Speak"
+              : "Hold to Speak"}
           </button>
         </div>
         {/* Chat Container */}
@@ -136,6 +216,15 @@ const Realtime = () => {
                 {msg.content}
               </div>
             ))}
+
+            {/* Processing indicator in chat */}
+            {isProcessing && (
+              <div className="p-4 rounded-xl bg-yellow-100/80 text-yellow-800 ml-4 flex items-center space-x-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-yellow-600"></div>
+                <span>Assistant is thinking...</span>
+              </div>
+            )}
+
             <div ref={messagesEndRef} />
           </div>
         </div>
